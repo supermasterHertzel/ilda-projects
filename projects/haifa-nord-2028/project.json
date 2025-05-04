@@ -1,0 +1,18 @@
+{
+  "slug": "haifa-nord-2028",
+  "title": "Haïfa Nord 2028",
+  "description": "Projet test pour valider l’API Express.",
+  "properties": [
+    {
+      "name": "4 pièces",
+      "area": 102,
+      "terrace": 13,
+      "cellar": 6,
+      "parking": true,
+      "price": 1544000,
+      "depositLabel": "On ink",
+      "depositAmount": 397000,
+      "contractType": "Off-Plan Purchase Agreement"
+    }
+  ]
+}
