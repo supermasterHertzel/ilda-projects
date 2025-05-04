@@ -1,19 +1,9 @@
 #!/usr/bin/env bash
 set -e
 
-# 1) Installer et build le frontend
-cd frontend
+# 1) Installer et builder le frontend + back
 npm install
 npm run build
 
-# 2) Installer backend et démarrer le serveur
-cd ../backend
-npm install
-node server.js
-npm install
-npm run build
-
-# 2) Installer backend et démarrer le serveur
-cd ../backend
-npm install
-node server.js
+# 2) Lancer le back compilé
+npm start
