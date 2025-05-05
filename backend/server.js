@@ -4,14 +4,17 @@ import fs from 'fs-extra';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const HOST = '0.0.0.0';
 
-// 1) Parser le JSON reçu en POST
+// 1) Parser le JSON des requêtes POST
 app.use(express.json());
 
-// 2) API GET pour récupérer un projet
+// 2) Routes API
+
+// GET /api/projects/:slug
 app.get('/api/projects/:slug', (req, res) => {
   const slug = req.params.slug;
-  const file = path.resolve('../projects', slug, 'project.json');
+  const file = path.join(__dirname, '..', 'projects', slug, 'project.json');
   if (!fs.existsSync(file)) {
     return res.status(404).json({ error: 'Project not found' });
   }
@@ -19,27 +22,32 @@ app.get('/api/projects/:slug', (req, res) => {
   res.json(JSON.parse(data));
 });
 
-// 3) API POST pour créer/mettre à jour un projet
+// POST /api/projects/:slug
 app.post('/api/projects/:slug', async (req, res) => {
   const slug = req.params.slug;
   const data = req.body;
-  const projDir = path.resolve('../projects', slug);
+  const projDir = path.join(__dirname, '..', 'projects', slug);
+
   await fs.ensureDir(projDir);
   await fs.writeJSON(path.join(projDir, 'project.json'), data, { spaces: 2 });
+
   res.json({ ok: true, slug });
 });
 
-// 4) Servir le build React (dossier frontend/dist/public)
-const publicDir = path.resolve('../frontend/dist/public');
-app.use(express.static(publicDir));
+// 3) Servir les fichiers statiques du build React
+const frontDist = path.join(__dirname, '..', 'frontend', 'dist');
+app.use(express.static(frontDist));
 
-// 5) Catch‑all pour React Router (Admin, /projects/:slug…)
-app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/api/')) return next();
-  res.sendFile(path.join(publicDir, 'index.html'));
+// 4) Catch‑all pour les routes client-side (Admin, /projects/:slug, etc.)
+app.get('/*', (req, res) => {
+  // Si c’est une route API, on ignore (sinon cette route captera tout)
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API route not found' });
+  }
+  res.sendFile(path.join(frontDist, 'index.html'));
 });
 
-// 6) Démarrage du serveur
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
+// 5) Démarrage du serveur
+app.listen(PORT, HOST, () => {
+  console.log(`Server listening on http://${HOST}:${PORT}`);
 });
