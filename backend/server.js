@@ -3,43 +3,43 @@ import path from 'path';
 import fs from 'fs-extra';
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
-// Enable JSON body parsing
+// 1) Parser le JSON reçu en POST
 app.use(express.json());
 
-// Serve static visuals and JSON under /projects
-app.use('/projects', express.static(path.resolve('../projects')));
-
-// GET a project by slug
+// 2) API GET pour récupérer un projet
 app.get('/api/projects/:slug', (req, res) => {
   const slug = req.params.slug;
   const file = path.resolve('../projects', slug, 'project.json');
-
   if (!fs.existsSync(file)) {
     return res.status(404).json({ error: 'Project not found' });
   }
-
-  const data = JSON.parse(fs.readFileSync(file, 'utf-8'));
-  res.json(data);
+  const data = fs.readFileSync(file, 'utf-8');
+  res.json(JSON.parse(data));
 });
 
-// POST to create or update a project
+// 3) API POST pour créer/mettre à jour un projet
 app.post('/api/projects/:slug', async (req, res) => {
-  const { slug } = req.params;
+  const slug = req.params.slug;
   const data = req.body;
   const projDir = path.resolve('../projects', slug);
-
-  // Ensure directory exists
   await fs.ensureDir(projDir);
-
-  // Write project.json with 2‑space indentation
   await fs.writeJSON(path.join(projDir, 'project.json'), data, { spaces: 2 });
-
   res.json({ ok: true, slug });
 });
 
-// Start server
+// 4) Servir le build React (dossier frontend/dist/public)
+const publicDir = path.resolve('../frontend/dist/public');
+app.use(express.static(publicDir));
+
+// 5) Catch‑all pour React Router (Admin, /projects/:slug…)
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/')) return next();
+  res.sendFile(path.join(publicDir, 'index.html'));
+});
+
+// 6) Démarrage du serveur
 app.listen(PORT, () => {
-  console.log(`API running on http://localhost:${PORT}`);
+  console.log(`Server listening on port ${PORT}`);
 });
